@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>贈答受注管理システム（デモ） — GiftDesk</title>
+<meta name="description" content="社内で運用中のギフト受注管理システムを、公開用にダミーデータで再現したフロントエンド・デモ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eceff4; --surface:#ffffff; --surface-2:#f5f8fc; --panel:#f0f3f8;
+  --ink:#16233d; --navy:#1f3a63; --navy-700:#17304f;
+  --text:#28374f; --muted:#617089; --line:#d7dee9; --line-2:#e6ebf2;
+  --accent:#a67c2e; --accent-600:#8a661f; --accent-soft:#f4ead2;
+  --danger:#c0392b; --danger-soft:#fbe9e7; --ok:#2f7d5b; --ok-soft:#e7f3ee;
+  --focus:#2b6cb0;
+  --radius:10px; --radius-sm:7px;
+  --shadow:0 1px 2px rgba(22,35,61,.06), 0 8px 24px rgba(22,35,61,.06);
+  --shadow-sm:0 1px 2px rgba(22,35,61,.08);
+  --sans:"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",YuGothic,Meiryo,sans-serif;
+  --serif:"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:var(--sans); color:var(--text); background:var(--bg);
+  line-height:1.7; letter-spacing:.01em; font-size:15px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1,h2,h3{color:var(--ink); line-height:1.4; margin:0}
+a{color:var(--navy)}
+button{font-family:inherit}
+:focus-visible{outline:2.5px solid var(--focus); outline-offset:2px; border-radius:4px}
+.tabnum{font-variant-numeric:tabular-nums}
+
+/* ---------- demo banner ---------- */
+.demo-banner{
+  position:sticky; top:0; z-index:50;
+  background:linear-gradient(90deg,var(--ink),var(--navy-700));
+  color:#f3e7c9; text-align:center; font-size:12.5px; font-weight:500;
+  letter-spacing:.06em; padding:7px 12px; border-bottom:1px solid rgba(166,124,46,.55);
+}
+.demo-banner b{color:#e9c877; font-weight:700}
+
+/* ---------- header / nav ---------- */
+.appbar{background:var(--surface); border-bottom:1px solid var(--line);}
+.appbar-inner{max-width:1120px; margin:0 auto; padding:14px 20px 0; }
+.brand{display:flex; align-items:center; gap:12px; padding-bottom:12px}
+.brand .mark{flex:0 0 auto}
+.brand .txt{display:flex; flex-direction:column; gap:1px}
+.brand .name{font-weight:700; font-size:18px; color:var(--ink); letter-spacing:.02em}
+.brand .name em{font-style:normal; color:var(--accent-600)}
+.brand .sub{font-size:12px; color:var(--muted); letter-spacing:.04em}
+nav.tabs{display:flex; gap:2px; overflow-x:auto; scrollbar-width:thin}
+nav.tabs button{
+  appearance:none; background:transparent; border:0; cursor:pointer;
+  padding:11px 15px 12px; font-size:14px; font-weight:500; color:var(--muted);
+  white-space:nowrap; border-bottom:2.5px solid transparent;
+}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button[aria-current="page"]{color:var(--ink); border-bottom-color:var(--accent); font-weight:700}
+
+/* ---------- layout ---------- */
+main{max-width:1120px; margin:0 auto; padding:26px 20px 64px}
+.view{display:none}
+.view.active{display:block}
+.view-head{margin-bottom:18px}
+.eyebrow{font-family:var(--serif); font-size:12px; letter-spacing:.18em; color:var(--accent-600); font-weight:600; text-transform:none; margin-bottom:5px}
+.view-head h2{font-size:22px; letter-spacing:.02em}
+.view-head p{margin:6px 0 0; color:var(--muted); font-size:13.5px; max-width:60ch}
+
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-sm)}
+.card + .card{margin-top:16px}
+.card-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; border-bottom:1px solid var(--line-2)}
+.card-head h3{font-size:15px}
+.card-head .hint{font-size:12px; color:var(--muted)}
+.card-body{padding:18px}
+
+/* ---------- buttons ---------- */
+.btn{
+  appearance:none; border:1px solid var(--navy); background:var(--navy); color:#fff;
+  padding:9px 16px; border-radius:var(--radius-sm); font-size:14px; font-weight:600;
+  cursor:pointer; display:inline-flex; align-items:center; gap:7px; line-height:1;
+}
+.btn:hover{background:var(--navy-700); border-color:var(--navy-700)}
+.btn.ghost{background:#fff; color:var(--navy); border-color:var(--line)}
+.btn.ghost:hover{background:var(--surface-2); border-color:var(--muted)}
+.btn.accent{background:var(--accent); border-color:var(--accent)}
+.btn.accent:hover{background:var(--accent-600); border-color:var(--accent-600)}
+.btn.sm{padding:6px 11px; font-size:12.5px; border-radius:6px}
+.btn.link{background:none; border:0; color:var(--navy); padding:4px 6px; font-weight:600}
+.btn.link:hover{color:var(--accent-600); text-decoration:underline}
+.btn.link.danger{color:var(--danger)}
+.btn svg{width:15px; height:15px}
+
+/* ---------- forms ---------- */
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px 18px}
+.field{display:flex; flex-direction:column; gap:5px; min-width:0}
+.field.full{grid-column:1 / -1}
+label.lbl{font-size:12.5px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:6px}
+.req{color:var(--danger); font-size:11px; font-weight:700}
+input[type=text],input[type=tel],input[type=number],input[type=date],select,textarea{
+  width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  font-family:inherit; font-size:14px; color:var(--text); background:#fff;
+}
+input:hover,select:hover{border-color:var(--muted)}
+input:focus,select:focus,textarea:focus{outline:none; border-color:var(--focus); box-shadow:0 0 0 3px rgba(43,108,176,.15)}
+input.invalid,select.invalid{border-color:var(--danger); background:var(--danger-soft)}
+.err{color:var(--danger); font-size:11.5px; min-height:0; display:none}
+.err.show{display:block}
+.help{font-size:11.5px; color:var(--muted)}
+
+/* requester + destinations */
+.subhead{display:flex; align-items:center; gap:10px; margin:2px 0 12px}
+.subhead .n{font-family:var(--serif); font-size:12px; color:var(--accent-600); letter-spacing:.14em; font-weight:600}
+.subhead .line{flex:1; height:1px; background:var(--line-2)}
+.dest{border:1px solid var(--line); border-radius:var(--radius); padding:15px 16px 16px; background:var(--surface-2); margin-bottom:14px}
+.dest-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.dest-top .tag{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; color:var(--ink)}
+.dest-top .tag .no{background:var(--ink); color:#fff; width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px}
+.zip-row{display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:end}
+.form-actions{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px; flex-wrap:wrap}
+.editing-flag{display:none; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--accent-600); background:var(--accent-soft); border:1px solid #e6d3a6; padding:6px 12px; border-radius:20px}
+.editing-flag.show{display:inline-flex}
+
+/* ---------- toolbar / search ---------- */
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px}
+.search{position:relative; flex:1; min-width:200px}
+.search input{padding-left:34px}
+.search svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--muted)}
+.count-pill{font-size:12.5px; color:var(--muted); white-space:nowrap}
+
+/* ---------- table ---------- */
+.table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); background:#fff}
+table.data{width:100%; border-collapse:collapse; min-width:820px; font-size:13.5px}
+table.data th,table.data td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--line-2); vertical-align:middle}
+table.data thead th{background:var(--panel); color:var(--ink); font-size:12px; font-weight:700; letter-spacing:.03em; position:sticky; top:0; white-space:nowrap}
+table.data tbody tr:hover{background:var(--surface-2)}
+table.data td.num{text-align:right; font-variant-numeric:tabular-nums}
+table.data td.actions{white-space:nowrap; text-align:right}
+.oid{font-variant-numeric:tabular-nums; font-weight:700; color:var(--ink); font-size:12.5px}
+.badge{display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:var(--panel); color:var(--muted)}
+.badge.n{background:var(--accent-soft); color:var(--accent-600)}
+.empty{padding:44px 20px; text-align:center; color:var(--muted)}
+.empty strong{display:block; color:var(--ink); font-size:15px; margin-bottom:4px}
+
+/* ---------- ship linkage ---------- */
+.link-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+.link-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px}
+.link-card .ic{width:40px; height:40px; border-radius:9px; display:grid; place-items:center; background:var(--panel); color:var(--navy)}
+.link-card h3{font-size:15px}
+.link-card p{margin:0; font-size:12.5px; color:var(--muted); flex:1}
+.flow{display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:6px}
+.flow .node{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:5px 13px; font-weight:600; color:var(--ink)}
+.flow .node.src{background:var(--ink); color:#fff; border-color:var(--ink)}
+.flow .arrow{color:var(--accent)}
+
+/* ---------- monthly ---------- */
+.stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px}
+.stat{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow-sm)}
+.stat .k{font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.03em}
+.stat .v{font-size:26px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; margin-top:3px; line-height:1.2}
+.stat .v small{font-size:14px; color:var(--muted); font-weight:600; margin-left:3px}
+.bars{display:flex; flex-direction:column; gap:11px}
+.bar-row{display:grid; grid-template-columns:150px 1fr auto; gap:12px; align-items:center; font-size:13px}
+.bar-row .name{color:var(--ink); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.bar-track{background:var(--panel); border-radius:6px; height:22px; overflow:hidden}
+.bar-fill{height:100%; background:linear-gradient(90deg,var(--accent),#c69a48); border-radius:6px; min-width:2px}
+.bar-fill.navy{background:linear-gradient(90deg,var(--navy),#35578a)}
+.bar-row .val{font-variant-numeric:tabular-nums; color:var(--ink); font-weight:600; white-space:nowrap}
+.bar-row .val small{color:var(--muted); font-weight:500; margin-left:6px; font-size:11.5px}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.month-select{display:flex; align-items:center; gap:8px}
+.month-select select{width:auto; padding:6px 10px}
+
+/* ---------- about ---------- */
+.about-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.stack-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+.stack-list li{display:flex; gap:11px; align-items:flex-start; font-size:13.5px}
+.stack-list .tech{font-weight:700; color:var(--ink); flex:0 0 168px}
+.stack-list .role{color:var(--muted)}
+.meta-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; font-size:13.5px}
+.meta-list li{display:flex; gap:10px}
+.meta-list .k{flex:0 0 96px; color:var(--muted); font-weight:600}
+.note{background:var(--accent-soft); border:1px solid #e6d3a6; border-radius:var(--radius); padding:14px 16px; font-size:13px; color:#6b5117}
+.note b{color:var(--accent-600)}
+
+/* ---------- preview / print overlay ---------- */
+.preview{position:fixed; inset:0; z-index:100; background:rgba(16,24,40,.55); display:none; overflow:auto; padding:24px 16px}
+.preview.open{display:block}
+.preview-panel{max-width:820px; margin:0 auto; background:#fff; border-radius:var(--radius); box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.preview-bar{position:sticky; top:0; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); background:#fff; border-radius:var(--radius) var(--radius) 0 0}
+.preview-bar .title{font-weight:700; color:var(--ink); font-size:15px}
+.preview-bar .grp{display:flex; gap:8px}
+.sheet{padding:26px 30px}
+
+/* instruction sheet */
+.sheet h1.doc{font-size:19px; letter-spacing:.08em; margin-bottom:2px}
+.sheet .doc-sub{color:var(--muted); font-size:12.5px; margin-bottom:18px}
+.ship-group{margin-bottom:20px; break-inside:avoid}
+.ship-group .gh{display:flex; align-items:baseline; gap:12px; border-bottom:2px solid var(--ink); padding-bottom:6px; margin-bottom:10px}
+.ship-group .gh .d{font-weight:700; color:var(--ink); font-size:15px}
+.ship-group .gh .c{color:var(--muted); font-size:12px}
+table.sheet-tbl{width:100%; border-collapse:collapse; font-size:12.5px}
+table.sheet-tbl th,table.sheet-tbl td{border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top}
+table.sheet-tbl th{background:var(--panel); font-size:11.5px; white-space:nowrap}
+
+/* noshi */
+.noshi-wrap{display:flex; flex-wrap:wrap; gap:22px; justify-content:center}
+.noshi{width:250px; height:352px; border:1px solid var(--line); background:#fffefb; position:relative; display:flex; flex-direction:column; align-items:center; box-shadow:var(--shadow-sm)}
+.noshi .nomark{position:absolute; top:12px; right:14px; width:26px}
+.noshi .omote{writing-mode:vertical-rl; font-family:var(--serif); font-size:26px; font-weight:600; color:#1a1a1a; margin-top:34px; letter-spacing:.12em}
+.noshi .mizuhiki{margin:8px 0}
+.noshi .nayose{writing-mode:vertical-rl; font-family:var(--serif); font-size:16px; color:#1a1a1a; margin-top:6px; letter-spacing:.08em; max-height:120px}
+.noshi .cap{position:absolute; bottom:8px; left:0; right:0; text-align:center; font-size:10.5px; color:var(--muted)}
+
+/* invoice */
+.inv-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; gap:20px}
+.inv-head .to{font-size:15px}
+.inv-head .to .nm{font-size:19px; font-weight:700; color:var(--ink); border-bottom:1px solid var(--ink); padding-bottom:3px; display:inline-block}
+.inv-head .from{text-align:right; font-size:12px; color:var(--muted); line-height:1.9}
+.inv-total{margin:14px 0 18px; background:var(--panel); border-radius:8px; padding:12px 16px; display:flex; justify-content:space-between; align-items:baseline}
+.inv-total .lab{font-weight:700; color:var(--ink)}
+.inv-total .amt{font-size:24px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums}
+table.inv-tbl{width:100%; border-collapse:collapse; font-size:13px}
+table.inv-tbl th,table.inv-tbl td{padding:9px 11px; border-bottom:1px solid var(--line)}
+table.inv-tbl thead th{background:var(--panel); text-align:left; font-size:12px}
+table.inv-tbl td.num,table.inv-tbl th.num{text-align:right; font-variant-numeric:tabular-nums}
+
+/* ---------- toast ---------- */
+.toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); z-index:200;
+  background:var(--ink); color:#fff; padding:11px 20px; border-radius:24px; font-size:13.5px; font-weight:600;
+  box-shadow:0 10px 30px rgba(0,0,0,.25); opacity:0; pointer-events:none}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--ok)}
+
+/* ---------- footer ---------- */
+.app-footer{border-top:1px solid var(--line); background:var(--surface); color:var(--muted); font-size:12px; text-align:center; padding:18px 20px}
+
+/* ---------- motion ---------- */
+@media (prefers-reduced-motion: no-preference){
+  .btn,nav.tabs button,input,select,.bar-fill,.toast{transition:all .16s ease}
+  .bar-fill{transition:width .5s cubic-bezier(.22,1,.36,1)}
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){
+  .link-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:1fr}
+  .two-col,.about-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  body{font-size:14px}
+  main{padding:20px 14px 56px}
+  .appbar-inner{padding:12px 14px 0}
+  .form-grid{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:110px 1fr auto; gap:8px}
+  .stack-list li{flex-direction:column; gap:2px}
+  .stack-list .tech{flex-basis:auto}
+  .sheet{padding:18px}
+  .noshi{width:210px; height:300px}
+  .noshi .omote{font-size:22px}
+}
+
+/* ---------- print ---------- */
+@media print{
+  body{background:#fff}
+  body *{visibility:hidden}
+  .preview,.preview *{visibility:visible}
+  .preview{position:absolute; inset:0; padding:0; background:#fff; overflow:visible}
+  .preview-panel{max-width:none; margin:0; box-shadow:none; border-radius:0}
+  .preview-bar,.no-print{display:none !important}
+  .sheet{padding:0}
+  .noshi{box-shadow:none}
+  @page{margin:14mm}
+}
+</style>
+</head>
+<body>
+<div class="demo-banner">デモ版｜データはすべて<b>架空のサンプル</b>です（実データ・実在の顧客/会社/商品名は含みません）</div>
+
+<header class="appbar">
+  <div class="appbar-inner">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+          <rect x="1" y="1" width="32" height="32" rx="8" fill="#16233d"/>
+          <path d="M9 21c3.2-3 5.8-3 8-3s4.8 0 8 3" stroke="#a67c2e" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M9 13c3.2 3 5.8 3 8 3s4.8 0 8-3" stroke="#e9c877" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <circle cx="17" cy="17" r="2.2" fill="#e9c877"/>
+        </svg>
+      </span>
+      <span class="txt">
+        <span class="name">GiftDesk <em>／</em> 贈答受注管理システム</span>
+        <span class="sub">受注入力から送り状・指示書・熨斗・月次集計までを一気通貫</span>
+      </span>
+    </div>
+    <nav class="tabs" aria-label="メインナビゲーション">
+      <button data-action="nav" data-view="input" aria-current="page">注文入力</button>
+      <button data-action="nav" data-view="list">申込一覧</button>
+      <button data-action="nav" data-view="ship">出荷連携</button>
+      <button data-action="nav" data-view="monthly">月次集計</button>
+      <button data-action="nav" data-view="about">このデモについて</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ============ 注文入力 ============ -->
+  <section class="view active" id="view-input" aria-labelledby="h-input">
+    <div class="view-head">
+      <div class="eyebrow">ORDER ENTRY</div>
+      <h2 id="h-input">注文入力</h2>
+      <p>依頼主と届け先（最大4件）を1回入力すると、送り状CSV・出荷指示書・熨斗・月次集計に自動で反映されます。</p>
+    </div>
+
+    <form id="orderForm" novalidate>
+      <div class="card">
+        <div class="card-head"><h3>ご依頼主</h3><span class="hint">贈り主の情報</span></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="lbl" for="rq-name">氏名 <span class="req">必須</span></label>
+              <input type="text" id="rq-name" autocomplete="off" placeholder="例）山田 太郎">
+              <span class="err" id="e-rq-name">氏名を入力してください。</span>
+            </div>
+            <div class="field">
+              <label class="lbl" for="rq-tel">電話番号 <span class="req">必須</span></label>
+              <input type="tel" id="rq-tel" autocomplete="off" placeholder="例）097-000-0000">
+              <span class="err" id="e-rq-tel">電話番号を正しい形式で入力してください（例：097-000-0000）。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>お届け先</h3>
+          <span class="hint">1依頼主につき最大4件</span>
+        </div>
+        <div class="card-body">
+          <div id="dest-list"></div>
+          <button type="button" class="btn ghost sm" id="addDestBtn" data-action="add-dest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            お届け先を追加
+          </button>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <span class="editing-flag" id="editFlag">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          <span id="editFlagText">編集中</span>
+          <button type="button" class="btn link" data-action="cancel-edit" style="padding:0 4px">キャンセル</button>
+        </span>
+        <div style="display:flex; gap:10px; margin-left:auto">
+          <button type="button" class="btn ghost" data-action="reset-form">クリア</button>
+          <button type="submit" class="btn accent" id="submitBtn">この内容で登録</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ 申込一覧 ============ -->
+  <section class="view" id="view-list" aria-labelledby="h-list">
+    <div class="view-head">
+      <div class="eyebrow">ORDERS</div>
+      <h2 id="h-list">申込一覧</h2>
+      <p>登録済みの受注を確認します。検索・編集・複製・削除、および熨斗・請求書のプレビューが行えます。</p>
+    </div>
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchBox" placeholder="依頼主・届け先・商品・受注番号で検索" autocomplete="off">
+      </div>
+      <span class="count-pill" id="countPill"></span>
+    </div>
+    <div id="listArea"></div>
+  </section>
+
+  <!-- ============ 出荷連携 ============ -->
+  <section class="view" id="view-ship" aria-labelledby="h-ship">
+    <div class="view-head">
+      <div class="eyebrow">FULFILLMENT</div>
+      <h2 id="h-ship">出荷連携</h2>
+      <p>入力済みの受注データから、出荷業務に必要な帳票をワンクリックで生成します。</p>
+    </div>
+    <div class="flow" style="margin-bottom:18px">
+      <span class="node src">注文入力（1回）</span>
+      <span class="arrow">→</span><span class="node">送り状CSV</span>
+      <span class="arrow">→</span><span class="node">出荷指示書</span>
+      <span class="arrow">→</span><span class="node">熨斗</span>
+      <span class="arrow">→</span><span class="node">月次集計</span>
+    </div>
+    <div class="link-grid">
+      <div class="link-card">
+        <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>
+        <h3>送り状CSV出力</h3>
+        <p>全出荷分をヤマトB2クラウド形式（風）のCSVに変換します。届け先1件が1行に対応します。</p>
+        <button class="btn" data-action="csv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          CSVをダウンロード
+        </button>
+      </div>
+      <div class="link-card">
+        <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6Z"/></svg></span>
+        <h3>出荷指示書</h3>
+        <p>出荷希望日ごとにまとめた指示書を表示します。そのまま印刷（プレビュー）できます。</p>
+        <button class="btn ghost" data-action="instruction">指示書をプレビュー</button>
+      </div>
+      <div class="link-card">
+        <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4Z"/><path d="M4 10c4-2 12-2 16 0M4 14c4 2 12 2 16 0"/></svg></span>
+        <h3>熨斗プレビュー</h3>
+        <p>表書き・名入れを反映した熨斗紙を表示します。水引もその場で描画します。</p>
+        <button class="btn ghost" data-action="noshi-all">熨斗をプレビュー</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 月次集計 ============ -->
+  <section class="view" id="view-monthly" aria-labelledby="h-monthly">
+    <div class="view-head" style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap">
+      <div>
+        <div class="eyebrow">DASHBOARD</div>
+        <h2 id="h-monthly">月次集計</h2>
+        <p>販売先別・商品別の件数と金額を自動集計します。注文の増減にその場で連動します。</p>
+      </div>
+      <div class="month-select">
+        <label class="lbl" for="monthSel" style="margin:0">集計対象</label>
+        <select id="monthSel"></select>
+      </div>
+    </div>
+    <div class="stat-row" id="statRow"></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><h3>商品別</h3><span class="hint">金額順</span></div>
+        <div class="card-body"><div class="bars" id="byProduct"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>販売先別（依頼主）</h3><span class="hint">金額順</span></div>
+        <div class="card-body"><div class="bars" id="byCustomer"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ このデモについて ============ -->
+  <section class="view" id="view-about" aria-labelledby="h-about">
+    <div class="view-head">
+      <div class="eyebrow">ABOUT</div>
+      <h2 id="h-about">このデモについて</h2>
+      <p>本アプリは、私が実務で開発・運用している社内の「ギフト受注管理システム」を、公開用にダミーデータで再現したフロントエンド版です。</p>
+    </div>
+    <div class="note" style="margin-bottom:16px">
+      <b>データについて：</b>表示されている顧客名・会社名・商品名・住所・電話番号・金額はすべて架空のサンプルです。実システムのソースコード・実データ・APIキーは一切含んでいません。状態はブラウザのメモリ上のみで保持し、再読み込みで初期化されます。
+    </div>
+    <div class="about-grid">
+      <div class="card">
+        <div class="card-head"><h3>実システムの技術スタック</h3></div>
+        <div class="card-body">
+          <ul class="stack-list">
+            <li><span class="tech">Google Apps Script</span><span class="role">アプリ本体（HtmlService による SPA）／サーバーサイド処理</span></li>
+            <li><span class="tech">Google スプレッドシート</span><span class="role">バックエンドDB（受注・出荷・顧客マスタ）</span></li>
+            <li><span class="tech">Google Cloud Vision API</span><span class="role">FAX注文書の OCR 読み取り</span></li>
+            <li><span class="tech">BigQuery</span><span class="role">受注データの集計・分析基盤</span></li>
+            <li><span class="tech">Looker Studio</span><span class="role">売上・出荷状況のダッシュボード可視化</span></li>
+            <li><span class="tech">Claude API</span><span class="role">入力補助・データ整形などの生成AI連携</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>このデモで再現した機能</h3></div>
+        <div class="card-body">
+          <ul class="stack-list">
+            <li><span class="tech">注文入力</span><span class="role">依頼主＋最大4届先、入力チェック付き</span></li>
+            <li><span class="tech">申込一覧</span><span class="role">検索・編集・複製・削除</span></li>
+            <li><span class="tech">送り状CSV</span><span class="role">B2クラウド形式（風）を Blob 生成</span></li>
+            <li><span class="tech">出荷指示書</span><span class="role">出荷日ごとに整形・印刷対応</span></li>
+            <li><span class="tech">熨斗プレビュー</span><span class="role">表書き・名入れ・水引の描画</span></li>
+            <li><span class="tech">月次集計</span><span class="role">CSS横棒グラフで自動可視化</span></li>
+            <li><span class="tech">請求書</span><span class="role">明細の一括表示・印刷</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-head"><h3>制作者</h3></div>
+      <div class="card-body">
+        <ul class="meta-list">
+          <li><span class="k">氏名</span><span>[あなたの名前]</span></li>
+          <li><span class="k">GitHub</span><span><a href="[GitHub URL]">[GitHub URL]</a></span></li>
+          <li><span class="k">技術記事</span><span><a href="[記事URL]">[記事URL]</a></span></li>
+          <li><span class="k">役割</span><span>要件定義・設計・実装・運用保守までを一人で担当（ソロ開発）</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="app-footer">GiftDesk — 贈答受注管理システム デモ版｜すべて架空データ｜ポートフォリオ用サンプル</div>
+
+<!-- preview / print overlay -->
+<div class="preview" id="preview" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+  <div class="preview-panel">
+    <div class="preview-bar no-print">
+      <span class="title" id="pvTitle">プレビュー</span>
+      <div class="grp">
+        <button class="btn accent sm" data-action="print">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6Z"/></svg>
+          印刷
+        </button>
+        <button class="btn ghost sm" data-action="close-preview">閉じる</button>
+      </div>
+    </div>
+    <div class="sheet" id="pvBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   GiftDesk — 贈答受注管理システム（デモ）  単一ファイル / バニラJS / メモリ状態
+   ===================================================================== */
+
+/* ---------- マスタ（すべて架空） ---------- */
+const PRODUCTS = [
+  { id:"G01", name:"銘茶詰合せ 「爽」",        price:3240 },
+  { id:"G02", name:"和菓子撰 折箱",           price:4320 },
+  { id:"G03", name:"焼菓子アソート",          price:2700 },
+  { id:"G04", name:"だし・調味料セット",      price:3780 },
+  { id:"G05", name:"果実ジュース詰合せ",      price:3240 },
+  { id:"G06", name:"味付海苔詰合せ 「彩」",   price:5400 },
+  { id:"G07", name:"ドリップコーヒーギフト",  price:2916 },
+  { id:"G08", name:"上質タオルセット",        price:4860 },
+];
+const PMAP = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+const NOSHI_TYPES = ["なし","お中元","お歳暮","御祝","内祝","御礼","志"];
+
+/* ---------- 状態（メモリのみ） ---------- */
+let orders = [];         // 受注配列
+let seq = 0;             // 受注番号の採番
+let editingId = null;    // 編集中の受注ID
+let destCount = 0;       // 入力フォームの届け先カード枚数
+
+/* ---------- ユーティリティ ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const yen = n => "¥" + Number(n||0).toLocaleString("ja-JP");
+const telRe = /^0\d{1,3}-?\d{2,4}-?\d{3,4}$/;
+const zipRe = /^\d{3}-?\d{4}$/;
+
+function fmtDate(iso){
+  if(!iso) return "";
+  const [y,m,d] = iso.split("-");
+  return `${y}/${m}/${d}`;
+}
+function mdDate(iso){
+  if(!iso) return "";
+  const [,m,d] = iso.split("-");
+  return `${Number(m)}月${Number(d)}日`;
+}
+function orderTotal(o){ return o.dests.reduce((s,d)=> s + (PMAP[d.pid]?.price||0)*d.qty, 0); }
+function orderShipDates(o){ return [...new Set(o.dests.map(d=>d.ship))].sort(); }
+
+let toastTimer;
+function toast(msg, ok=true){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = "toast show" + (ok ? " ok" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.className = "toast", 2200);
+}
+
+/* =====================================================================
+   ナビゲーション
+   ===================================================================== */
+function go(view){
+  $$(".view").forEach(v => v.classList.remove("active"));
+  $("#view-"+view).classList.add("active");
+  $$("nav.tabs button").forEach(b =>
+    b.setAttribute("aria-current", b.dataset.view===view ? "page" : "false"));
+  window.scrollTo({top:0, behavior:"instant"});
+  if(view==="list") renderList();
+  if(view==="monthly") renderMonthly();
+}
+
+/* =====================================================================
+   注文入力フォーム
+   ===================================================================== */
+function destCardHTML(idx, d){
+  d = d || {};
+  const opts = PRODUCTS.map(p =>
+    `<option value="${p.id}"${p.id===d.pid?" selected":""}>${esc(p.name)}（${yen(p.price)}）</option>`).join("");
+  const nopts = NOSHI_TYPES.map(t =>
+    `<option value="${t}"${t===(d.noshi||"なし")?" selected":""}>${t}</option>`).join("");
+  const removable = idx > 0;
+  return `
+  <div class="dest" data-idx="${idx}">
+    <div class="dest-top">
+      <span class="tag"><span class="no">${idx+1}</span>お届け先 ${idx+1}</span>
+      ${removable ? `<button type="button" class="btn link danger" data-action="remove-dest" data-idx="${idx}">削除</button>` : ``}
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label class="lbl" for="d-name-${idx}">氏名 <span class="req">必須</span></label>
+        <input type="text" id="d-name-${idx}" data-f="name" autocomplete="off" value="${esc(d.name)}" placeholder="例）佐藤 花子">
+        <span class="err" data-e="name">氏名を入力してください。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-tel-${idx}">電話番号 <span class="req">必須</span></label>
+        <input type="tel" id="d-tel-${idx}" data-f="tel" autocomplete="off" value="${esc(d.tel)}" placeholder="例）097-000-0000">
+        <span class="err" data-e="tel">電話番号を正しい形式で入力してください。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-zip-${idx}">郵便番号 <span class="req">必須</span></label>
+        <input type="text" id="d-zip-${idx}" data-f="zip" autocomplete="off" value="${esc(d.zip)}" placeholder="例）870-0000" inputmode="numeric">
+        <span class="err" data-e="zip">郵便番号は「000-0000」の形式で入力してください。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-addr-${idx}">住所 <span class="req">必須</span></label>
+        <input type="text" id="d-addr-${idx}" data-f="addr" autocomplete="off" value="${esc(d.addr)}" placeholder="例）大分県大分市○○町1-2-3">
+        <span class="err" data-e="addr">住所を入力してください。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-pid-${idx}">商品 <span class="req">必須</span></label>
+        <select id="d-pid-${idx}" data-f="pid"><option value="">選択してください</option>${opts}</select>
+        <span class="err" data-e="pid">商品を選択してください。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-qty-${idx}">数量 <span class="req">必須</span></label>
+        <input type="number" id="d-qty-${idx}" data-f="qty" min="1" max="99" value="${d.qty||1}">
+        <span class="err" data-e="qty">1以上の数量を入力してください。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-noshi-${idx}">熨斗（表書き）</label>
+        <select id="d-noshi-${idx}" data-f="noshi">${nopts}</select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-nayose-${idx}">名入れ</label>
+        <input type="text" id="d-nayose-${idx}" data-f="nayose" autocomplete="off" value="${esc(d.nayose)}" placeholder="例）山田">
+        <span class="help">「熨斗なし」の場合は空欄で構いません。</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="d-ship-${idx}">出荷希望日 <span class="req">必須</span></label>
+        <input type="date" id="d-ship-${idx}" data-f="ship" value="${esc(d.ship)}">
+        <span class="err" data-e="ship">出荷希望日を指定してください。</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addDestination(data){
+  if(destCount >= 4){ toast("お届け先は最大4件までです", false); return; }
+  const wrap = document.createElement("div");
+  wrap.innerHTML = destCardHTML(destCount, data);
+  $("#dest-list").appendChild(wrap.firstElementChild);
+  destCount++;
+  $("#addDestBtn").style.display = destCount >= 4 ? "none" : "";
+}
+
+function removeDestination(idx){
+  const list = $("#dest-list");
+  const card = list.querySelector(`.dest[data-idx="${idx}"]`);
+  if(card) card.remove();
+  // 再採番
+  destCount = 0;
+  $$(".dest", list).forEach((c) => {
+    const i = destCount;
+    c.dataset.idx = i;
+    c.querySelector(".tag .no").textContent = i+1;
+    c.querySelector(".tag").childNodes[1].textContent = `お届け先 ${i+1}`;
+    const rm = c.querySelector('[data-action="remove-dest"]');
+    if(rm) rm.dataset.idx = i;
+    destCount++;
+  });
+  $("#addDestBtn").style.display = destCount >= 4 ? "none" : "";
+}
+
+function resetForm(){
+  editingId = null;
+  destCount = 0;
+  $("#orderForm").reset();
+  $("#dest-list").innerHTML = "";
+  $("#addDestBtn").style.display = "";
+  $("#editFlag").classList.remove("show");
+  $("#submitBtn").textContent = "この内容で登録";
+  clearErrors();
+  addDestination();
+}
+
+function clearErrors(){
+  $$(".err", $("#orderForm")).forEach(e => e.classList.remove("show"));
+  $$("input,select", $("#orderForm")).forEach(el => el.classList.remove("invalid"));
+}
+
+function showFieldError(input, errEl){
+  input.classList.add("invalid");
+  if(errEl) errEl.classList.add("show");
+}
+
+function collectAndValidate(){
+  clearErrors();
+  let ok = true, firstBad = null;
+  const mark = (inp, err) => { showFieldError(inp, err); ok=false; if(!firstBad) firstBad=inp; };
+
+  const rqName = $("#rq-name"), rqTel = $("#rq-tel");
+  if(!rqName.value.trim()) mark(rqName, $("#e-rq-name"));
+  if(!telRe.test(rqTel.value.trim())) mark(rqTel, $("#e-rq-tel"));
+
+  const dests = [];
+  $$(".dest", $("#dest-list")).forEach(card => {
+    const g = f => card.querySelector(`[data-f="${f}"]`);
+    const ge = f => card.querySelector(`[data-e="${f}"]`);
+    const name=g("name"), tel=g("tel"), zip=g("zip"), addr=g("addr"),
+          pid=g("pid"), qty=g("qty"), noshi=g("noshi"), nayose=g("nayose"), ship=g("ship");
+    if(!name.value.trim()) mark(name, ge("name"));
+    if(!telRe.test(tel.value.trim())) mark(tel, ge("tel"));
+    if(!zipRe.test(zip.value.trim())) mark(zip, ge("zip"));
+    if(!addr.value.trim()) mark(addr, ge("addr"));
+    if(!pid.value) mark(pid, ge("pid"));
+    if(!(Number(qty.value) >= 1)) mark(qty, ge("qty"));
+    if(!ship.value) mark(ship, ge("ship"));
+    dests.push({
+      name:name.value.trim(), tel:tel.value.trim(), zip:zip.value.trim(), addr:addr.value.trim(),
+      pid:pid.value, qty:Number(qty.value)||1, noshi:noshi.value, nayose:nayose.value.trim(), ship:ship.value
+    });
+  });
+
+  if(!ok){
+    if(firstBad) firstBad.focus();
+    toast("入力内容をご確認ください", false);
+    return null;
+  }
+  return { requester:{ name:rqName.value.trim(), tel:rqTel.value.trim() }, dests };
+}
+
+function submitOrder(){
+  const data = collectAndValidate();
+  if(!data) return;
+  if(editingId){
+    const o = orders.find(x => x.id===editingId);
+    o.requester = data.requester; o.dests = data.dests;
+    toast("受注を更新しました");
+  }else{
+    seq++;
+    orders.unshift({ id:`ORD-${new Date().getFullYear()}-${String(seq).padStart(4,"0")}`,
+      date: today(), requester:data.requester, dests:data.dests });
+    toast("受注を登録しました");
+  }
+  resetForm();
+  go("list");
+}
+
+function editOrder(id){
+  const o = orders.find(x => x.id===id);
+  if(!o) return;
+  editingId = id;
+  destCount = 0;
+  $("#dest-list").innerHTML = "";
+  $("#rq-name").value = o.requester.name;
+  $("#rq-tel").value = o.requester.tel;
+  o.dests.forEach(d => addDestination(d));
+  $("#addDestBtn").style.display = destCount >= 4 ? "none" : "";
+  $("#editFlagText").textContent = `編集中：${o.id}`;
+  $("#editFlag").classList.add("show");
+  $("#submitBtn").textContent = "更新を保存";
+  clearErrors();
+  go("input");
+}
+
+function duplicateOrder(id){
+  const o = orders.find(x => x.id===id);
+  if(!o) return;
+  editingId = null;
+  destCount = 0;
+  $("#dest-list").innerHTML = "";
+  $("#rq-name").value = o.requester.name;
+  $("#rq-tel").value = o.requester.tel;
+  o.dests.forEach(d => addDestination({ ...d, ship:"" })); // 出荷日はクリアして再入力を促す
+  $("#addDestBtn").style.display = destCount >= 4 ? "none" : "";
+  $("#editFlag").classList.remove("show");
+  $("#submitBtn").textContent = "この内容で登録";
+  clearErrors();
+  go("input");
+  toast("過去の注文を複製しました。出荷希望日を指定してください");
+}
+
+function deleteOrder(id){
+  const o = orders.find(x => x.id===id);
+  if(!o) return;
+  if(!confirm(`受注 ${o.id}（依頼主：${o.requester.name}）を削除します。よろしいですか？`)) return;
+  orders = orders.filter(x => x.id!==id);
+  renderList();
+  toast("受注を削除しました");
+}
+
+function cancelEdit(){ resetForm(); toast("編集をキャンセルしました"); }
+
+/* =====================================================================
+   申込一覧
+   ===================================================================== */
+function renderList(){
+  const q = $("#searchBox").value.trim().toLowerCase();
+  const filtered = orders.filter(o => {
+    if(!q) return true;
+    const hay = [o.id, o.requester.name,
+      ...o.dests.map(d => d.name), ...o.dests.map(d => PMAP[d.pid]?.name||"")]
+      .join(" ").toLowerCase();
+    return hay.includes(q);
+  });
+
+  $("#countPill").textContent = `全 ${orders.length} 件${q ? `／該当 ${filtered.length} 件` : ""}`;
+
+  if(filtered.length===0){
+    $("#listArea").innerHTML = `<div class="table-wrap"><div class="empty">
+      <strong>${orders.length===0 ? "受注がまだありません" : "該当する受注がありません"}</strong>
+      ${orders.length===0 ? "「注文入力」から最初の受注を登録してください。" : "検索条件を変更してください。"}
+    </div></div>`;
+    return;
+  }
+
+  const rows = filtered.map(o => {
+    const ships = orderShipDates(o);
+    const prodSummary = o.dests.length===1
+      ? esc(PMAP[o.dests[0].pid]?.name||"")
+      : `${esc(PMAP[o.dests[0].pid]?.name||"")} ほか`;
+    const shipLabel = ships.length===1 ? fmtDate(ships[0]) : `${fmtDate(ships[0])} 他${ships.length-1}日`;
+    return `<tr>
+      <td><span class="oid">${o.id}</span></td>
+      <td class="tabnum">${fmtDate(o.date)}</td>
+      <td>${esc(o.requester.name)}</td>
+      <td><span class="badge n">${o.dests.length}件</span></td>
+      <td>${prodSummary}</td>
+      <td class="tabnum">${shipLabel}</td>
+      <td class="num">${yen(orderTotal(o))}</td>
+      <td class="actions">
+        <button class="btn link" data-action="edit" data-id="${o.id}">編集</button>
+        <button class="btn link" data-action="duplicate" data-id="${o.id}">複製</button>
+        <button class="btn link" data-action="noshi-one" data-id="${o.id}">熨斗</button>
+        <button class="btn link" data-action="invoice" data-id="${o.id}">請求</button>
+        <button class="btn link danger" data-action="delete" data-id="${o.id}">削除</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  $("#listArea").innerHTML = `<div class="table-wrap"><table class="data">
+    <thead><tr>
+      <th>受注番号</th><th>受注日</th><th>依頼主</th><th>届け先</th>
+      <th>主な商品</th><th>出荷日</th><th style="text-align:right">合計金額</th><th style="text-align:right">操作</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+/* =====================================================================
+   送り状CSV（ヤマトB2クラウド風）
+   ===================================================================== */
+function buildCsv(){
+  const header = ["お客様管理番号","送り状種類","クール区分","出荷予定日","お届け予定日",
+    "届け先電話番号","届け先郵便番号","届け先住所","届け先名","ご依頼主電話番号","ご依頼主郵便番号",
+    "ご依頼主住所","ご依頼主名","品名1","個数","記事"];
+  const rows = [header];
+  orders.forEach(o => {
+    o.dests.forEach((d,i) => {
+      const p = PMAP[d.pid];
+      rows.push([
+        `${o.id}-${i+1}`, "0", "0", d.ship.replace(/-/g,"/"), addDays(d.ship,1).replace(/-/g,"/"),
+        d.tel, d.zip, d.addr, d.name, o.requester.tel, "",
+        "", o.requester.name, `${p?p.name:""}×${d.qty}`, String(d.qty),
+        d.noshi!=="なし" ? `熨斗:${d.noshi}${d.nayose?`/${d.nayose}`:""}` : ""
+      ]);
+    });
+  });
+  return rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+}
+function csvCell(v){
+  v = String(v ?? "");
+  return /[",\r\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v;
+}
+function downloadCsv(){
+  if(orders.length===0){ toast("出力対象の受注がありません", false); return; }
+  const csv = buildCsv();
+  const blob = new Blob(["\uFEFF"+csv], { type:"text/csv;charset=utf-8;" }); // Excel向けBOM付きUTF-8
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `okurijo_${today().replace(/-/g,"")}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+  const lines = orders.reduce((s,o)=> s+o.dests.length, 0);
+  toast(`送り状CSVを出力しました（${lines}行）`);
+}
+
+/* =====================================================================
+   出荷指示書（出荷日ごと）
+   ===================================================================== */
+function openInstruction(){
+  if(orders.length===0){ toast("対象の受注がありません", false); return; }
+  const groups = {};
+  orders.forEach(o => o.dests.forEach((d,i) => {
+    (groups[d.ship] ||= []).push({ o, d, no:i+1 });
+  }));
+  const dates = Object.keys(groups).sort();
+  const body = dates.map(date => {
+    const items = groups[date];
+    const rows = items.map(({o,d,no}) => `
+      <tr>
+        <td>${o.id}-${no}</td>
+        <td>${esc(d.name)} 様<br><span style="color:#617089;font-size:11px">〒${esc(d.zip)} ${esc(d.addr)}</span></td>
+        <td>${esc(PMAP[d.pid]?.name||"")}</td>
+        <td style="text-align:center">${d.qty}</td>
+        <td>${d.noshi==="なし" ? "—" : esc(d.noshi)+(d.nayose?`／${esc(d.nayose)}`:"")}</td>
+        <td>${esc(o.requester.name)}</td>
+      </tr>`).join("");
+    return `<div class="ship-group">
+      <div class="gh"><span class="d">出荷日 ${fmtDate(date)}</span><span class="c">${items.length} 件</span></div>
+      <table class="sheet-tbl"><thead><tr>
+        <th>管理番号</th><th>お届け先</th><th>商品</th><th>数量</th><th>熨斗／名入れ</th><th>依頼主</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }).join("");
+
+  const total = orders.reduce((s,o)=> s+o.dests.length, 0);
+  openPreview("出荷指示書", `
+    <h1 class="doc">出荷指示書</h1>
+    <div class="doc-sub">発行日：${fmtDate(today())}／総出荷 ${total} 件／出荷日 ${dates.length} 区分</div>
+    ${body}
+  `);
+}
+
+/* =====================================================================
+   熨斗プレビュー（水引をSVGで描画）
+   ===================================================================== */
+function mizuhikiSVG(){
+  return `<svg class="mizuhiki" width="150" height="42" viewBox="0 0 150 42" aria-hidden="true">
+    <path d="M75 21 C55 21 40 6 30 6 C18 6 14 21 30 21 C46 21 60 6 75 21" fill="none" stroke="#b22222" stroke-width="2.4"/>
+    <path d="M75 21 C95 21 110 6 120 6 C132 6 136 21 120 21 C104 21 90 6 75 21" fill="none" stroke="#b22222" stroke-width="2.4"/>
+    <path d="M75 21 C55 21 40 36 30 36 C18 36 14 21 30 21" fill="none" stroke="#c9a227" stroke-width="2.4"/>
+    <path d="M75 21 C95 21 110 36 120 36 C132 36 136 21 120 21" fill="none" stroke="#c9a227" stroke-width="2.4"/>
+    <rect x="71" y="6" width="8" height="30" fill="#fff"/>
+    <path d="M73 4 L73 38 M77 4 L77 38" stroke="#b22222" stroke-width="1.4"/>
+    <path d="M75 4 L75 38" stroke="#c9a227" stroke-width="1.4"/>
+  </svg>`;
+}
+function noshiCard(d){
+  return `<div class="noshi">
+    <svg class="nomark" viewBox="0 0 24 40" aria-hidden="true">
+      <path d="M12 1 L21 6 L18 34 L12 39 L6 34 L3 6 Z" fill="#fffbe9" stroke="#c9a227" stroke-width="1"/>
+      <rect x="10" y="9" width="4" height="22" rx="2" fill="#e6b34a"/>
+    </svg>
+    <div class="omote">${esc(d.noshi)}</div>
+    ${mizuhikiSVG()}
+    <div class="nayose">${esc(d.nayose||"")}</div>
+    <div class="cap">${esc(PMAP[d.pid]?.name||"")}｜${esc(d.name)} 様</div>
+  </div>`;
+}
+function noshiFrom(dests, title){
+  const list = dests.filter(d => d.noshi !== "なし");
+  if(list.length===0){ toast("熨斗指定のある明細がありません", false); return; }
+  openPreview(title, `
+    <h1 class="doc">熨斗プレビュー</h1>
+    <div class="doc-sub">表書き・名入れを反映した熨斗紙（${list.length} 枚）</div>
+    <div class="noshi-wrap">${list.map(noshiCard).join("")}</div>
+  `);
+}
+function openNoshiAll(){
+  if(orders.length===0){ toast("対象の受注がありません", false); return; }
+  noshiFrom(orders.flatMap(o => o.dests), "熨斗プレビュー（全件）");
+}
+function openNoshiOne(id){
+  const o = orders.find(x => x.id===id);
+  if(!o) return;
+  noshiFrom(o.dests, `熨斗プレビュー（${o.id}）`);
+}
+
+/* =====================================================================
+   請求書
+   ===================================================================== */
+function openInvoice(id){
+  const o = orders.find(x => x.id===id);
+  if(!o) return;
+  const rows = o.dests.map((d,i) => {
+    const p = PMAP[d.pid];
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${esc(p?.name||"")}<br><span style="color:#617089;font-size:11px">お届け先：${esc(d.name)} 様</span></td>
+      <td class="num">${yen(p?.price||0)}</td>
+      <td class="num">${d.qty}</td>
+      <td class="num">${yen((p?.price||0)*d.qty)}</td>
+    </tr>`;
+  }).join("");
+  const total = orderTotal(o);
+  openPreview(`請求書（${o.id}）`, `
+    <div class="inv-head">
+      <div class="to">
+        <span class="nm">${esc(o.requester.name)} 様</span>
+        <div style="color:#617089;font-size:12px;margin-top:6px">TEL：${esc(o.requester.tel)}</div>
+        <div style="margin-top:14px;font-size:13px;color:#28374f">下記の通りご請求申し上げます。</div>
+      </div>
+      <div class="from">
+        <div style="font-weight:700;color:#16233d;font-size:14px">GiftDesk（デモ）</div>
+        発行日：${fmtDate(today())}<br>
+        請求番号：INV-${o.id.replace("ORD-","")}<br>
+        ※ 架空のサンプル請求書です
+      </div>
+    </div>
+    <div class="inv-total"><span class="lab">ご請求金額（税込）</span><span class="amt">${yen(total)}</span></div>
+    <table class="inv-tbl">
+      <thead><tr><th style="width:36px">No.</th><th>品名／お届け先</th><th class="num">単価</th><th class="num">数量</th><th class="num">金額</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="4" class="num" style="font-weight:700">合計</td><td class="num" style="font-weight:700">${yen(total)}</td></tr></tfoot>
+    </table>
+  `);
+}
+
+/* =====================================================================
+   月次集計
+   ===================================================================== */
+function monthsInData(){
+  const set = new Set();
+  orders.forEach(o => o.dests.forEach(d => set.add(d.ship.slice(0,7))));
+  return [...set].sort().reverse();
+}
+function initMonthSelect(){
+  const sel = $("#monthSel");
+  const months = monthsInData();
+  const cur = sel.value;
+  sel.innerHTML = `<option value="all">全期間</option>` +
+    months.map(m => {
+      const [y,mo] = m.split("-");
+      return `<option value="${m}">${y}年${Number(mo)}月</option>`;
+    }).join("");
+  // 既存選択を維持、なければ最新月
+  if(cur && [...sel.options].some(o=>o.value===cur)) sel.value = cur;
+  else sel.value = months[0] || "all";
+}
+function renderMonthly(){
+  initMonthSelect();
+  const m = $("#monthSel").value;
+  const inScope = ship => m==="all" ? true : ship.slice(0,7)===m;
+
+  const prodAgg = {}, custAgg = {};
+  let totalAmt=0, totalCnt=0;
+  orders.forEach(o => o.dests.forEach(d => {
+    if(!inScope(d.ship)) return;
+    const amt = (PMAP[d.pid]?.price||0)*d.qty;
+    totalAmt += amt; totalCnt++;
+    const pn = PMAP[d.pid]?.name || "不明";
+    (prodAgg[pn] ||= {cnt:0, amt:0}); prodAgg[pn].cnt += d.qty; prodAgg[pn].amt += amt;
+    const cn = o.requester.name;
+    (custAgg[cn] ||= {cnt:0, amt:0}); custAgg[cn].cnt++; custAgg[cn].amt += amt;
+  }));
+
+  $("#statRow").innerHTML = `
+    <div class="stat"><div class="k">合計売上</div><div class="v">${yen(totalAmt)}</div></div>
+    <div class="stat"><div class="k">出荷件数</div><div class="v">${totalCnt}<small>件</small></div></div>
+    <div class="stat"><div class="k">販売先数</div><div class="v">${Object.keys(custAgg).length}<small>先</small></div></div>`;
+
+  $("#byProduct").innerHTML = barChart(prodAgg, "amt", false);
+  $("#byCustomer").innerHTML = barChart(custAgg, "amt", true);
+}
+function barChart(agg, key, navy){
+  const rows = Object.entries(agg).sort((a,b) => b[1][key]-a[1][key]);
+  if(rows.length===0) return `<div class="empty" style="padding:24px"><strong>データがありません</strong>対象期間の出荷がありません。</div>`;
+  const max = rows[0][1][key] || 1;
+  return rows.map(([name, v]) => {
+    const w = Math.max(2, Math.round(v[key]/max*100));
+    return `<div class="bar-row">
+      <span class="name" title="${esc(name)}">${esc(name)}</span>
+      <div class="bar-track"><div class="bar-fill${navy?" navy":""}" style="width:${w}%"></div></div>
+      <span class="val">${yen(v.amt)}<small>${v.cnt}件</small></span>
+    </div>`;
+  }).join("");
+}
+
+/* =====================================================================
+   プレビュー / 印刷オーバーレイ
+   ===================================================================== */
+let lastFocused = null;
+function openPreview(title, html){
+  lastFocused = document.activeElement;
+  $("#pvTitle").textContent = title;
+  $("#pvBody").innerHTML = html;
+  $("#preview").classList.add("open");
+  document.body.style.overflow = "hidden";
+  $('#preview [data-action="close-preview"]').focus();
+}
+function closePreview(){
+  $("#preview").classList.remove("open");
+  document.body.style.overflow = "";
+  if(lastFocused && lastFocused.focus) lastFocused.focus();
+}
+
+/* =====================================================================
+   日付ヘルパー
+   ===================================================================== */
+function today(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+function addDays(iso, n){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(y, m-1, d+n);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+}
+
+/* =====================================================================
+   初期ダミーデータ（すべて架空）
+   ===================================================================== */
+function seed(){
+  const D = [
+    { id:"ORD-2026-0001", date:"2026-06-08", rq:["佐藤 健一","097-000-0011"], dests:[
+      ["田中 美咲","097-000-0101","870-0021","大分県大分市府内町1-2-3","G01",1,"お中元","佐藤","2026-07-03"],
+      ["鈴木 太郎","0977-00-0202","874-0902","大分県別府市青山町4-5","G03",1,"お中元","佐藤","2026-07-03"],
+    ]},
+    { id:"ORD-2026-0002", date:"2026-06-10", rq:["高橋 由美","097-000-0022"], dests:[
+      ["渡辺 三郎","092-000-0303","812-0011","福岡県福岡市博多区博多駅前2-3-4","G06",1,"御礼","高橋","2026-07-05"],
+    ]},
+    { id:"ORD-2026-0003", date:"2026-06-14", rq:["伊藤 誠","0972-00-0033"], dests:[
+      ["中村 香織","097-000-0404","870-0035","大分県大分市南太平寺1-1","G02",2,"御祝","伊藤","2026-07-10"],
+      ["小林 直樹","097-000-0505","870-0044","大分県大分市中央町3-2","G04",1,"御祝","伊藤","2026-07-10"],
+      ["加藤 恵","097-000-0606","870-0055","大分県大分市金池町2-6","G07",1,"内祝","伊藤","2026-07-12"],
+    ]},
+    { id:"ORD-2026-0004", date:"2026-06-18", rq:["山本 京子","097-000-0044"], dests:[
+      ["吉田 学","0978-00-0707","871-0064","大分県中津市大貞7-8","G05",1,"お中元","山本","2026-07-07"],
+      ["山田 花子","097-000-0808","870-0026","大分県大分市金池南1-3","G08",1,"お中元","山本","2026-07-07"],
+    ]},
+    { id:"ORD-2026-0005", date:"2026-06-22", rq:["松本 隆","097-000-0055"], dests:[
+      ["井上 洋子","0973-00-0909","877-0000","大分県日田市田島2-4","G01",3,"志","松本","2026-07-14"],
+    ]},
+    { id:"ORD-2026-0006", date:"2026-07-01", rq:["木村 真理","092-000-0066"], dests:[
+      ["林 健太","092-000-1010","810-0001","福岡県福岡市中央区天神1-5-6","G06",1,"御礼","木村","2026-07-16"],
+      ["清水 明","093-000-1111","802-0002","福岡県北九州市小倉北区京町3-1","G03",2,"御礼","木村","2026-07-16"],
+    ]},
+    { id:"ORD-2026-0007", date:"2026-07-05", rq:["斎藤 光","097-000-0077"], dests:[
+      ["森 千恵","097-000-1212","870-0037","大分県大分市東春日町5-2","G07",1,"内祝","斎藤","2026-07-20"],
+    ]},
+    { id:"ORD-2026-0008", date:"2026-07-09", rq:["池田 修","0977-00-0088"], dests:[
+      ["橋本 亮","0977-00-1313","874-0920","大分県別府市北浜1-2","G02",1,"お中元","池田","2026-07-22"],
+      ["阿部 さやか","097-000-1414","870-0839","大分県大分市金池町4-1","G05",2,"お中元","池田","2026-07-22"],
+      ["岡田 大輔","097-000-1515","870-0918","大分県大分市松原町2-3","G08",1,"お中元","池田","2026-07-24"],
+    ]},
+  ];
+  orders = D.map(o => ({
+    id:o.id, date:o.date,
+    requester:{ name:o.rq[0], tel:o.rq[1] },
+    dests:o.dests.map(a => ({
+      name:a[0], tel:a[1], zip:a[2], addr:a[3], pid:a[4], qty:a[5], noshi:a[6], nayose:a[7], ship:a[8]
+    }))
+  }));
+  seq = D.length;
+}
+
+/* =====================================================================
+   イベント委譲 & 初期化
+   ===================================================================== */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-action]");
+  if(!el) return;
+  const a = el.dataset.action, id = el.dataset.id, idx = el.dataset.idx;
+  switch(a){
+    case "nav": go(el.dataset.view); break;
+    case "add-dest": addDestination(); break;
+    case "remove-dest": removeDestination(Number(idx)); break;
+    case "reset-form": resetForm(); toast("入力内容をクリアしました"); break;
+    case "cancel-edit": cancelEdit(); break;
+    case "edit": editOrder(id); break;
+    case "duplicate": duplicateOrder(id); break;
+    case "delete": deleteOrder(id); break;
+    case "csv": downloadCsv(); break;
+    case "instruction": openInstruction(); break;
+    case "noshi-all": openNoshiAll(); break;
+    case "noshi-one": openNoshiOne(id); break;
+    case "invoice": openInvoice(id); break;
+    case "print": window.print(); break;
+    case "close-preview": closePreview(); break;
+  }
+});
+
+$("#orderForm").addEventListener("submit", e => { e.preventDefault(); submitOrder(); });
+$("#searchBox").addEventListener("input", renderList);
+$("#monthSel").addEventListener("change", renderMonthly);
+document.addEventListener("keydown", e => {
+  if(e.key==="Escape" && $("#preview").classList.contains("open")) closePreview();
+});
+
+// 起動
+seed();
+addDestination();      // 入力フォームに届け先1枚
+renderList();          // 一覧を準備
+</script>
+</body>
+</html>
