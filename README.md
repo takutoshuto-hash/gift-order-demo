@@ -55,18 +55,11 @@
 
 ```bash
 # リポジトリを取得
-git clone https://github.com/<takutoshuto-hash/gift-order-demo.git
+git clone https://github.com/takutoshuto-hash/gift-order-demo.git
 cd gift-order-demo
 ```
 
 `index.html` をブラウザでそのまま開くだけで動作します（ダブルクリック、またはブラウザにドラッグ＆ドロップ）。
-
-## GitHub Pages での公開
-
-1. このリポジトリを GitHub に push
-2. リポジトリの **Settings → Pages** を開く
-3. **Source** を `Deploy from a branch`、Branch を `main` / `(root)` に設定して保存
-4. 数分後に `https://<ユーザー名>.github.io/<リポジトリ名>/` で公開されます
 
 ---
 
