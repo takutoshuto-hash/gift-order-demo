@@ -40,12 +40,18 @@
 
 - **Google Apps Script**（HtmlService による SPA／サーバーサイド処理）
 - **Google スプレッドシート**（バックエンドDB）
-- **Google Cloud Vision API**（FAX注文書のOCR読み取り）
+- **Gemini API（マルチモーダルLLM）**（FAX注文書からの項目の構造化抽出。氏名・住所・商品・数量などを JSON で取得）
 - **BigQuery**（受注データの集計・分析）
 - **Looker Studio**（売上・出荷状況の可視化）
 - **Claude API**（入力補助・データ整形などの生成AI連携）
 
 要件定義・設計・実装・運用保守までを一人で担当しました（ソロ開発）。
+
+### 運用コストと技術選定の判断
+
+- OCR以外はすべて **Google 無料枠内で運用し、月額 ¥0**。
+- 帳票OCR（**Gemini API**）のみ、**有料（従量課金）で運用**しています。無料枠ではリクエスト内容がモデル学習に利用されうるため、顧客の氏名・住所などを含む FAX を扱う本システムでは、**コスト削減よりも顧客データの保護を優先し、あえて有料枠を選択**しました。処理量が小さいため月額はごくわずかです。
+- OCR は当初 **Google Cloud Vision API** を使用していましたが、手書き・崩れた FAX の構造化抽出精度と、後処理ルールの削減を目的に **Gemini API へ移行**しました。
 
 ---
 
@@ -79,5 +85,4 @@ cd gift-order-demo
 ## 制作者
 
 - 氏名：**首藤卓登**
-- - GitHub：**https://github.com/takutoshuto-hash**
-
+- GitHub：**https://github.com/takutoshuto-hash**
